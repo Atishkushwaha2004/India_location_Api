@@ -8,6 +8,7 @@ from db import get_connection, release_connection
 from auth import verify_api_key
 from logger import log_request
 import time
+import os
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -15,7 +16,10 @@ app = FastAPI(title="India Location API", version="1.0.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Static folder check karke mount karo
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 # ── Middleware ──────────────────────────────────────
@@ -81,7 +85,10 @@ def home():
 
 @app.get("/dashboard")
 def dashboard():
-    return FileResponse("static/dashboard.html")
+    dashboard_path = os.path.join(os.path.dirname(__file__), "static", "dashboard.html")
+    if os.path.exists(dashboard_path):
+        return FileResponse(dashboard_path)
+    return {"message": "Dashboard not available"}
 
 
 @app.get("/states")
