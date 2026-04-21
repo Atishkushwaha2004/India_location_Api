@@ -16,13 +16,11 @@ app = FastAPI(title="India Location API", version="1.0.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Static folder check karke mount karo
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
-# ── Middleware ──────────────────────────────────────
 @app.middleware("http")
 async def log_middleware(request: Request, call_next):
     start_time = time.time()
@@ -35,9 +33,7 @@ async def log_middleware(request: Request, call_next):
         conn = get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT id FROM api_keys WHERE api_key = %s", (api_key,)
-            )
+            cursor.execute("SELECT id FROM api_keys WHERE api_key = %s", (api_key,))
             row = cursor.fetchone()
             if row:
                 key_id = row[0]
@@ -48,7 +44,6 @@ async def log_middleware(request: Request, call_next):
             release_connection(conn)
 
     query_param = str(dict(request.query_params)) if request.query_params else None
-
     log_request(
         api_key_id=key_id,
         endpoint=request.url.path,
@@ -57,11 +52,9 @@ async def log_middleware(request: Request, call_next):
         response_time_ms=round(response_time, 2),
         query_param=query_param
     )
-
     return response
 
 
-# ── Helper ──────────────────────────────────────────
 def fetch_all(query: str, params: tuple = ()):
     conn = get_connection()
     try:
@@ -75,8 +68,6 @@ def fetch_all(query: str, params: tuple = ()):
     finally:
         release_connection(conn)
 
-
-# ── Routes ──────────────────────────────────────────
 
 @app.get("/")
 def home():
@@ -159,21 +150,32 @@ def search_village(
     q: str = Query(..., min_length=2),
     client=Depends(verify_api_key)
 ):
-    rows = fetch_all("""
-        SELECT v.name, sd.name, d.name, s.name
-        FROM villages v
-        JOIN sub_districts sd ON v.sub_district_id = sd.id
-        JOIN districts d ON sd.district_id = d.id
-        JOIN states s ON d.state_id = s.id
-        WHERE v.name ILIKE %s
-        LIMIT 50;
-    """, (f"%{q}%",))
-    if not rows:
-        raise HTTPException(status_code=404, detail="No villages found")
-    return [
-        {"village": r[0], "sub_district": r[1], "district": r[2], "state": r[3]}
-        for r in rows
-    ]
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT v.name, sd.name, d.name, s.name
+            FROM villages v
+            JOIN sub_districts sd ON v.sub_district_id = sd.id
+            JOIN districts d ON sd.district_id = d.id
+            JOIN states s ON d.state_id = s.id
+            WHERE v.name ILIKE %s
+            LIMIT 50;
+        """, (f"%{q}%",))
+        data = cursor.fetchall()
+        cursor.close()
+        if not data:
+            raise HTTPException(status_code=404, detail="No villages found")
+        return [
+            {"village": r[0], "sub_district": r[1], "district": r[2], "state": r[3]}
+            for r in data
+        ]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        release_connection(conn)
 
 
 @app.get("/counts")
@@ -190,8 +192,6 @@ def get_counts(request: Request):
         "villages": villages
     }
 
-
-# ── Admin Routes ────────────────────────────────────
 
 @app.get("/admin/usage")
 def get_usage():
