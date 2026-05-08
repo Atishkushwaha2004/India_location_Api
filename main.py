@@ -9,42 +9,65 @@ from auth import verify_api_key
 from logger import log_request
 import time
 import os
-import webbrowser
 
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(title="India Location API", version="1.0.0")
+
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# -------------------------------
+# Static Files Mount
+# -------------------------------
 static_dir = os.path.join(os.path.dirname(__file__), "static")
+
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
+# -------------------------------
+# Middleware Logging
+# -------------------------------
 @app.middleware("http")
 async def log_middleware(request: Request, call_next):
+
     start_time = time.time()
+
     response = await call_next(request)
+
     response_time = (time.time() - start_time) * 1000
 
     api_key = request.headers.get("x-api-key")
+
     key_id = None
+
     if api_key:
         conn = get_connection()
+
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT id FROM api_keys WHERE api_key = %s", (api_key,))
+
+            cursor.execute(
+                "SELECT id FROM api_keys WHERE api_key = %s",
+                (api_key,)
+            )
+
             row = cursor.fetchone()
+
             if row:
                 key_id = row[0]
+
             cursor.close()
+
         except:
             pass
+
         finally:
             release_connection(conn)
 
     query_param = str(dict(request.query_params)) if request.query_params else None
+
     log_request(
         api_key_id=key_id,
         endpoint=request.url.path,
@@ -53,73 +76,171 @@ async def log_middleware(request: Request, call_next):
         response_time_ms=round(response_time, 2),
         query_param=query_param
     )
+
     return response
 
 
+# -------------------------------
+# Database Fetch Helper
+# -------------------------------
 def fetch_all(query: str, params: tuple = ()):
+
     conn = get_connection()
+
     try:
         cursor = conn.cursor()
+
         cursor.execute(query, params)
+
         rows = cursor.fetchall()
+
         cursor.close()
+
         return rows
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
     finally:
         release_connection(conn)
 
 
+# -------------------------------
+# Home Route
+# -------------------------------
 @app.get("/")
 def home():
-    return {"message": "India Location API is running", "version": "1.0.0"}
 
+    dashboard_path = os.path.join(
+        os.path.dirname(__file__),
+        "static",
+        "dashboard.html"
+    )
 
-@app.get("/dashboard")
-def dashboard():
-    dashboard_path = os.path.join(os.path.dirname(__file__), "static", "dashboard.html")
     if os.path.exists(dashboard_path):
         return FileResponse(dashboard_path)
-    return {"message": "Dashboard not available"}
+
+    return {
+        "message": "Dashboard not found"
+    }
 
 
+# -------------------------------
+# Dashboard Route
+# -------------------------------
+@app.get("/dashboard")
+def dashboard():
+
+    dashboard_path = os.path.join(
+        os.path.dirname(__file__),
+        "static",
+        "dashboard.html"
+    )
+
+    if os.path.exists(dashboard_path):
+        return FileResponse(dashboard_path)
+
+    return {
+        "message": "Dashboard not available"
+    }
+
+
+# -------------------------------
+# States API
+# -------------------------------
 @app.get("/states")
 @limiter.limit("30/minute")
-def get_states(request: Request, client=Depends(verify_api_key)):
-    rows = fetch_all("SELECT id, name FROM states ORDER BY name;")
-    return [{"id": r[0], "name": r[1]} for r in rows]
+def get_states(
+    request: Request,
+    client=Depends(verify_api_key)
+):
+
+    rows = fetch_all(
+        "SELECT id, name FROM states ORDER BY name;"
+    )
+
+    return [
+        {
+            "id": r[0],
+            "name": r[1]
+        }
+        for r in rows
+    ]
 
 
+# -------------------------------
+# Districts API
+# -------------------------------
 @app.get("/districts/{state}")
 @limiter.limit("30/minute")
-def get_districts(request: Request, state: str, client=Depends(verify_api_key)):
+def get_districts(
+    request: Request,
+    state: str,
+    client=Depends(verify_api_key)
+):
+
     rows = fetch_all("""
         SELECT d.id, d.name
         FROM districts d
-        JOIN states s ON d.state_id = s.id
+        JOIN states s
+        ON d.state_id = s.id
         WHERE LOWER(s.name) = LOWER(%s)
         ORDER BY d.name;
     """, (state,))
+
     if not rows:
-        raise HTTPException(status_code=404, detail=f"State '{state}' not found")
-    return [{"id": r[0], "name": r[1]} for r in rows]
+        raise HTTPException(
+            status_code=404,
+            detail=f"State '{state}' not found"
+        )
+
+    return [
+        {
+            "id": r[0],
+            "name": r[1]
+        }
+        for r in rows
+    ]
 
 
+# -------------------------------
+# Sub District API
+# -------------------------------
 @app.get("/sub_districts/{district}")
 @limiter.limit("30/minute")
-def get_sub_districts(request: Request, district: str, client=Depends(verify_api_key)):
+def get_sub_districts(
+    request: Request,
+    district: str,
+    client=Depends(verify_api_key)
+):
+
     rows = fetch_all("""
         SELECT sd.id, sd.name
         FROM sub_districts sd
-        JOIN districts d ON sd.district_id = d.id
+        JOIN districts d
+        ON sd.district_id = d.id
         WHERE TRIM(LOWER(d.name)) = TRIM(LOWER(%s))
         ORDER BY sd.name;
     """, (district,))
+
     if not rows:
-        raise HTTPException(status_code=404, detail=f"District '{district}' not found")
-    return [{"id": r[0], "name": r[1]} for r in rows]
+        raise HTTPException(
+            status_code=404,
+            detail=f"District '{district}' not found"
+        )
+
+    return [
+        {
+            "id": r[0],
+            "name": r[1]
+        }
+        for r in rows
+    ]
 
 
+# -------------------------------
+# Villages API
+# -------------------------------
 @app.get("/villages/{sub_district}")
 @limiter.limit("30/minute")
 def get_villages(
@@ -129,21 +250,33 @@ def get_villages(
     offset: int = Query(default=0, ge=0),
     client=Depends(verify_api_key)
 ):
+
     rows = fetch_all("""
         SELECT v.id, v.name
         FROM villages v
-        JOIN sub_districts sd ON v.sub_district_id = sd.id
+        JOIN sub_districts sd
+        ON v.sub_district_id = sd.id
         WHERE LOWER(sd.name) = LOWER(%s)
         ORDER BY v.name
         LIMIT %s OFFSET %s;
     """, (sub_district, limit, offset))
+
     return {
-        "data": [{"id": r[0], "name": r[1]} for r in rows],
+        "data": [
+            {
+                "id": r[0],
+                "name": r[1]
+            }
+            for r in rows
+        ],
         "limit": limit,
         "offset": offset
     }
 
 
+# -------------------------------
+# Search API
+# -------------------------------
 @app.get("/search")
 @limiter.limit("20/minute")
 def search_village(
@@ -151,41 +284,85 @@ def search_village(
     q: str = Query(..., min_length=2),
     client=Depends(verify_api_key)
 ):
+
     conn = get_connection()
+
     try:
         cursor = conn.cursor()
+
         cursor.execute("""
-            SELECT v.name, sd.name, d.name, s.name
+            SELECT
+                v.name,
+                sd.name,
+                d.name,
+                s.name
             FROM villages v
-            JOIN sub_districts sd ON v.sub_district_id = sd.id
-            JOIN districts d ON sd.district_id = d.id
-            JOIN states s ON d.state_id = s.id
+            JOIN sub_districts sd
+            ON v.sub_district_id = sd.id
+            JOIN districts d
+            ON sd.district_id = d.id
+            JOIN states s
+            ON d.state_id = s.id
             WHERE v.name ILIKE %s
             LIMIT 50;
         """, (f"%{q}%",))
+
         data = cursor.fetchall()
+
         cursor.close()
+
         if not data:
-            raise HTTPException(status_code=404, detail="No villages found")
+            raise HTTPException(
+                status_code=404,
+                detail="No villages found"
+            )
+
         return [
-            {"village": r[0], "sub_district": r[1], "district": r[2], "state": r[3]}
+            {
+                "village": r[0],
+                "sub_district": r[1],
+                "district": r[2],
+                "state": r[3]
+            }
             for r in data
         ]
+
     except HTTPException:
         raise
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
     finally:
         release_connection(conn)
 
 
+# -------------------------------
+# Counts API
+# -------------------------------
 @app.get("/counts")
 @limiter.limit("10/minute")
 def get_counts(request: Request):
-    states = fetch_all("SELECT COUNT(*) FROM states;")[0][0]
-    districts = fetch_all("SELECT COUNT(*) FROM districts;")[0][0]
-    sub_districts = fetch_all("SELECT COUNT(*) FROM sub_districts;")[0][0]
-    villages = fetch_all("SELECT COUNT(*) FROM villages;")[0][0]
+
+    states = fetch_all(
+        "SELECT COUNT(*) FROM states;"
+    )[0][0]
+
+    districts = fetch_all(
+        "SELECT COUNT(*) FROM districts;"
+    )[0][0]
+
+    sub_districts = fetch_all(
+        "SELECT COUNT(*) FROM sub_districts;"
+    )[0][0]
+
+    villages = fetch_all(
+        "SELECT COUNT(*) FROM villages;"
+    )[0][0]
+
     return {
         "states": states,
         "districts": districts,
@@ -194,8 +371,12 @@ def get_counts(request: Request):
     }
 
 
+# -------------------------------
+# Admin Usage API
+# -------------------------------
 @app.get("/admin/usage")
 def get_usage():
+
     rows = fetch_all("""
         SELECT
             COALESCE(ak.client_name, 'Anonymous') as client,
@@ -204,10 +385,12 @@ def get_usage():
             ROUND(AVG(ul.response_time_ms)::numeric, 2) as avg_response_ms,
             MAX(ul.created_at) as last_used
         FROM usage_logs ul
-        LEFT JOIN api_keys ak ON ul.api_key_id = ak.id
+        LEFT JOIN api_keys ak
+        ON ul.api_key_id = ak.id
         GROUP BY ak.client_name, ul.endpoint
         ORDER BY total_calls DESC;
     """)
+
     return [
         {
             "client": r[0],
@@ -220,8 +403,12 @@ def get_usage():
     ]
 
 
+# -------------------------------
+# Admin Logs API
+# -------------------------------
 @app.get("/admin/logs")
 def get_logs():
+
     rows = fetch_all("""
         SELECT
             ul.endpoint,
@@ -234,6 +421,7 @@ def get_logs():
         ORDER BY ul.created_at DESC
         LIMIT 50;
     """)
+
     return [
         {
             "endpoint": r[0],
