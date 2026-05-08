@@ -4,27 +4,50 @@ from fastapi.responses import FileResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+
 from db import get_connection, release_connection
 from auth import verify_api_key
 from logger import log_request
+
 import time
 import os
 
+# -------------------------------
+# Rate Limiter
+# -------------------------------
 limiter = Limiter(key_func=get_remote_address)
 
-app = FastAPI(title="India Location API", version="1.0.0")
+# -------------------------------
+# FastAPI App
+# -------------------------------
+app = FastAPI(
+    title="India Location API",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler
+)
 
 # -------------------------------
-# Static Files Mount
+# Static Folder Mount
 # -------------------------------
-static_dir = os.path.join(os.path.dirname(__file__), "static")
+static_dir = os.path.join(
+    os.path.dirname(__file__),
+    "static"
+)
 
 if os.path.exists(static_dir):
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+    app.mount(
+        "/static",
+        StaticFiles(directory=static_dir),
+        name="static"
+    )
 
 # -------------------------------
 # Middleware Logging
@@ -43,6 +66,7 @@ async def log_middleware(request: Request, call_next):
     key_id = None
 
     if api_key:
+
         conn = get_connection()
 
         try:
@@ -66,7 +90,10 @@ async def log_middleware(request: Request, call_next):
         finally:
             release_connection(conn)
 
-    query_param = str(dict(request.query_params)) if request.query_params else None
+    query_param = (
+        str(dict(request.query_params))
+        if request.query_params else None
+    )
 
     log_request(
         api_key_id=key_id,
@@ -79,15 +106,15 @@ async def log_middleware(request: Request, call_next):
 
     return response
 
-
 # -------------------------------
-# Database Fetch Helper
+# Database Helper
 # -------------------------------
 def fetch_all(query: str, params: tuple = ()):
 
     conn = get_connection()
 
     try:
+
         cursor = conn.cursor()
 
         cursor.execute(query, params)
@@ -99,14 +126,18 @@ def fetch_all(query: str, params: tuple = ()):
         return rows
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
     finally:
+
         release_connection(conn)
 
-
 # -------------------------------
-# Home Route
+# Frontend Home Route
 # -------------------------------
 @app.get("/")
 def home():
@@ -118,12 +149,12 @@ def home():
     )
 
     if os.path.exists(dashboard_path):
+
         return FileResponse(dashboard_path)
 
     return {
         "message": "Dashboard not found"
     }
-
 
 # -------------------------------
 # Dashboard Route
@@ -138,12 +169,12 @@ def dashboard():
     )
 
     if os.path.exists(dashboard_path):
+
         return FileResponse(dashboard_path)
 
     return {
         "message": "Dashboard not available"
     }
-
 
 # -------------------------------
 # States API
@@ -167,7 +198,6 @@ def get_states(
         for r in rows
     ]
 
-
 # -------------------------------
 # Districts API
 # -------------------------------
@@ -189,6 +219,7 @@ def get_districts(
     """, (state,))
 
     if not rows:
+
         raise HTTPException(
             status_code=404,
             detail=f"State '{state}' not found"
@@ -201,7 +232,6 @@ def get_districts(
         }
         for r in rows
     ]
-
 
 # -------------------------------
 # Sub District API
@@ -224,6 +254,7 @@ def get_sub_districts(
     """, (district,))
 
     if not rows:
+
         raise HTTPException(
             status_code=404,
             detail=f"District '{district}' not found"
@@ -236,7 +267,6 @@ def get_sub_districts(
         }
         for r in rows
     ]
-
 
 # -------------------------------
 # Villages API
@@ -273,7 +303,6 @@ def get_villages(
         "offset": offset
     }
 
-
 # -------------------------------
 # Search API
 # -------------------------------
@@ -288,6 +317,7 @@ def search_village(
     conn = get_connection()
 
     try:
+
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -312,6 +342,7 @@ def search_village(
         cursor.close()
 
         if not data:
+
             raise HTTPException(
                 status_code=404,
                 detail="No villages found"
@@ -331,14 +362,15 @@ def search_village(
         raise
 
     except Exception as e:
+
         raise HTTPException(
             status_code=500,
             detail=str(e)
         )
 
     finally:
-        release_connection(conn)
 
+        release_connection(conn)
 
 # -------------------------------
 # Counts API
@@ -370,7 +402,6 @@ def get_counts(request: Request):
         "villages": villages
     }
 
-
 # -------------------------------
 # Admin Usage API
 # -------------------------------
@@ -401,7 +432,6 @@ def get_usage():
         }
         for r in rows
     ]
-
 
 # -------------------------------
 # Admin Logs API
