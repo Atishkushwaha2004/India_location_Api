@@ -9,6 +9,7 @@ from auth import verify_api_key
 from logger import log_request
 import time
 import os
+import webbrowser
 
 limiter = Limiter(key_func=get_remote_address)
 

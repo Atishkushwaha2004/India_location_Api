@@ -5,6 +5,9 @@ import os
 
 load_dotenv()
 
+# SSL mode: "require" for production (Render/Railway/Supabase), "disable" for local
+SSL_MODE = os.getenv("DB_SSLMODE", "disable")
+
 connection_pool = pool.SimpleConnectionPool(
     minconn=int(os.getenv("DB_MIN_CONN", 2)),
     maxconn=int(os.getenv("DB_MAX_CONN", 10)),
@@ -12,7 +15,7 @@ connection_pool = pool.SimpleConnectionPool(
     database=os.getenv("DB_NAME"),
     user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASSWORD"),
-    sslmode="require"               # ← add this line
+    sslmode=SSL_MODE
 )
 
 def get_connection():

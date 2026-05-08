@@ -1,205 +1,429 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>India Location API — Admin Dashboard</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: segoe ui, sans-serif; background: #f5f6fa; color: #333; }
-        .navbar { background: #1a1a2e; color: white; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
-        .navbar h1 { font-size: 18px; font-weight: 600; }
-        .navbar span { font-size: 13px; opacity: 0.7; }
-        .container { max-width: 1100px; margin: 32px auto; padding: 0 24px; }
-        .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
-        .card { background: white; border-radius: 12px; padding: 20px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        .card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .card .value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
-        .card .sub { font-size: 12px; color: #aaa; margin-top: 4px; }
-        .section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 24px; }
-        .section h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; padding: 10px 12px; background: #f8f9fb; color: #666; font-weight: 500; border-bottom: 1px solid #eee; }
-        td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #fafbff; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-        .badge-200 { background: #e8f5e9; color: #2e7d32; }
-        .badge-404 { background: #fff3e0; color: #e65100; }
-        .badge-422 { background: #fce4ec; color: #c62828; }
-        .badge-500 { background: #fce4ec; color: #c62828; }
-        .bar-wrap { background: #f0f0f0; border-radius: 4px; height: 8px; width: 100%; }
-        .bar { background: #4361ee; border-radius: 4px; height: 8px; }
-        .refresh-btn { background: #4361ee; color: white; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; }
-        .refresh-btn:hover { background: #3451d1; }
-        .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .empty { text-align: center; color: #aaa; padding: 32px; font-size: 14px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>India Location API — Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2300e5a0'/><text y='24' x='5' font-size='22'>🗺</text></svg>" />
 </head>
 <body>
 
-<div class="navbar">
-    <h1>India Location API — Admin Dashboard</h1>
-    <span id="last-updated">Loading...</span>
-</div>
+<div class="grid-bg"></div>
 
-<div class="container">
+<!-- ─── APP SHELL ───────────────────────────────────────────────────── -->
+<div class="app-container">
 
-    <!-- Stats Cards -->
-    <div class="cards">
-        <div class="card">
-            <div class="label">Total Requests</div>
-            <div class="value" id="total-requests">—</div>
-            <div class="sub">All time</div>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge">
+        <div class="logo-icon">🗺</div>
+        <div>
+          <div class="logo-text">LocationAPI</div>
+          <div class="logo-sub">India · v1.0</div>
         </div>
-        <div class="card">
-            <div class="label">Successful</div>
-            <div class="value" id="total-success" style="color:#2e7d32">—</div>
-            <div class="sub">Status 200</div>
-        </div>
-        <div class="card">
-            <div class="label">Failed</div>
-            <div class="value" id="total-failed" style="color:#c62828">—</div>
-            <div class="sub">4xx / 5xx</div>
-        </div>
-        <div class="card">
-            <div class="label">Avg Response</div>
-            <div class="value" id="avg-response">—</div>
-            <div class="sub">milliseconds</div>
-        </div>
+      </div>
+      <div class="version-pill">v1.0.0 stable</div>
     </div>
 
-    <!-- Endpoint Usage Table -->
-    <div class="section">
-        <div class="top-row">
-            <h2>Endpoint Usage</h2>
-            <button class="refresh-btn" onclick="loadData()">Refresh</button>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item active" data-page="home">
+        <span class="nav-icon">⊞</span> Overview
+      </div>
+      <div class="nav-item" data-page="explore">
+        <span class="nav-icon">⚡</span> API Explorer
+      </div>
+      <div class="nav-item" data-page="search">
+        <span class="nav-icon">⌕</span> Village Search
+      </div>
+      <div class="nav-item" data-page="hierarchy">
+        <span class="nav-icon">⋮</span> Hierarchy Browser
+      </div>
+
+      <div class="nav-section-label" style="margin-top:12px;">Admin</div>
+      <div class="nav-item" data-page="logs">
+        <span class="nav-icon">≡</span> Request Logs
+        <span class="nav-badge" id="logsBadge">—</span>
+      </div>
+      <div class="nav-item" data-page="usage">
+        <span class="nav-icon">↗</span> Usage Analytics
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="api-key-box">
+        <div class="api-key-label">🔑 API Key</div>
+        <div id="apiKeyDisplay" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:8px;">Not set</div>
+        <input id="apiKeyInput" class="api-key-input" type="password" placeholder="Enter your API key…" />
+        <button class="btn-save-key" onclick="saveApiKey()">Save Key</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <h1 class="topbar-title" id="pageTitle">Dashboard Overview</h1>
+      <div class="topbar-right">
+        <div class="status-dot">
+          <span class="dot"></span>
+          <span>API Online</span>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Client</th>
-                    <th>Endpoint</th>
-                    <th>Total Calls</th>
-                    <th>Avg Response</th>
-                    <th>Usage</th>
-                    <th>Last Used</th>
-                </tr>
-            </thead>
-            <tbody id="usage-table">
-                <tr><td colspan="6" class="empty">Loading...</td></tr>
-            </tbody>
+      </div>
+    </header>
+
+    <!-- ─── PAGE: HOME ───────────────────────────────────────────────── -->
+    <div class="page active" id="page-home">
+
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🏛</div>
+          <div class="stat-value" id="count-states">—</div>
+          <div class="stat-label">States</div>
+          <div class="stat-glow" style="background:var(--accent);"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📍</div>
+          <div class="stat-value" id="count-districts">—</div>
+          <div class="stat-label">Districts</div>
+          <div class="stat-glow" style="background:var(--accent2);"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🗂</div>
+          <div class="stat-value" id="count-sub">—</div>
+          <div class="stat-label">Sub-Districts</div>
+          <div class="stat-glow" style="background:var(--accent3);"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏘</div>
+          <div class="stat-value" id="count-villages">—</div>
+          <div class="stat-label">Villages</div>
+          <div class="stat-glow" style="background:#ff6b35;"></div>
+        </div>
+      </div>
+
+      <!-- QUICK API OVERVIEW -->
+      <div class="section-header mb-16">
+        <div class="section-title">Endpoints at a Glance</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px;">
+        <!-- each endpoint chip -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <span class="method-badge method-get">GET</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;">/states</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--muted);">30/min</span>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <span class="method-badge method-get">GET</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;">/districts/{state}</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--muted);">30/min</span>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <span class="method-badge method-get">GET</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;">/sub_districts/{district}</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--muted);">30/min</span>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <span class="method-badge method-get">GET</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;">/villages/{sub_district}</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--muted);">30/min</span>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <span class="method-badge method-get">GET</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;">/search?q=...</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--muted);">20/min</span>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <span class="method-badge method-get">GET</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;">/counts</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--muted);">10/min</span>
+        </div>
+      </div>
+
+      <!-- HIERARCHY VISUAL -->
+      <div class="section-header mb-16">
+        <div class="section-title">Data Hierarchy</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:28px;">🏛</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-top:4px;">State</div>
+        </div>
+        <div style="font-size:20px;color:var(--border-glow);">→</div>
+        <div style="text-align:center;">
+          <div style="font-size:28px;">📍</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:2px;text-transform:uppercase;margin-top:4px;">District</div>
+        </div>
+        <div style="font-size:20px;color:var(--border-glow);">→</div>
+        <div style="text-align:center;">
+          <div style="font-size:28px;">🗂</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent3);letter-spacing:2px;text-transform:uppercase;margin-top:4px;">Sub-District</div>
+        </div>
+        <div style="font-size:20px;color:var(--border-glow);">→</div>
+        <div style="text-align:center;">
+          <div style="font-size:28px;">🏘</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--warning);letter-spacing:2px;text-transform:uppercase;margin-top:4px;">Village</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE: EXPLORER ───────────────────────────────────────────── -->
+    <div class="page" id="page-explore">
+      <div class="section-header mb-16">
+        <div class="section-title">Live API Explorer</div>
+        <span style="font-size:12px;color:var(--muted);">Set your API key in the sidebar first</span>
+      </div>
+
+      <div class="explorer-grid">
+
+        <!-- GET /states -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge method-get">GET</span>
+            <span class="endpoint-path">/states</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Returns all Indian states ordered alphabetically. Requires a valid API key.</p>
+            <button class="btn-run" onclick="runEndpoint('states', '/states')">▶ Run</button>
+            <div id="res-states" class="response-box">Response will appear here…</div>
+          </div>
+        </div>
+
+        <!-- GET /districts -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge method-get">GET</span>
+            <span class="endpoint-path">/districts/{state}</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Fetch all districts for a given state name (case-insensitive).</p>
+            <div class="input-row">
+              <input id="in-districts" class="api-input" placeholder="e.g. Maharashtra" />
+              <button class="btn-run" onclick="runEndpoint('districts', v => `/districts/${encodeURIComponent(v || 'Maharashtra')}`)">▶ Run</button>
+            </div>
+            <div id="res-districts" class="response-box">Response will appear here…</div>
+          </div>
+        </div>
+
+        <!-- GET /sub_districts -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge method-get">GET</span>
+            <span class="endpoint-path">/sub_districts/{district}</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Returns all sub-districts (talukas) for a given district.</p>
+            <div class="input-row">
+              <input id="in-sub_districts" class="api-input" placeholder="e.g. Nagpur" />
+              <button class="btn-run" onclick="runEndpoint('sub_districts', v => `/sub_districts/${encodeURIComponent(v || 'Nagpur')}`)">▶ Run</button>
+            </div>
+            <div id="res-sub_districts" class="response-box">Response will appear here…</div>
+          </div>
+        </div>
+
+        <!-- GET /villages -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge method-get">GET</span>
+            <span class="endpoint-path">/villages/{sub_district}</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Lists villages under a sub-district. Supports pagination (limit/offset).</p>
+            <div class="input-row">
+              <input id="in-villages" class="api-input" placeholder="e.g. Hingna" />
+              <button class="btn-run" onclick="runEndpoint('villages', v => `/villages/${encodeURIComponent(v || 'Hingna')}?limit=10`)">▶ Run</button>
+            </div>
+            <div id="res-villages" class="response-box">Response will appear here…</div>
+          </div>
+        </div>
+
+        <!-- GET /search -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge method-get">GET</span>
+            <span class="endpoint-path">/search</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Full-text search across all villages. Returns village + district + state context.</p>
+            <div class="input-row">
+              <input id="in-search" class="api-input" placeholder="e.g. Wardha" />
+              <button class="btn-run" onclick="runEndpoint('search', v => `/search?q=${encodeURIComponent(v || 'Wardha')}`)">▶ Run</button>
+            </div>
+            <div id="res-search" class="response-box">Response will appear here…</div>
+          </div>
+        </div>
+
+        <!-- GET /counts -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge method-get">GET</span>
+            <span class="endpoint-path">/counts</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Returns total record counts for all levels. No API key required.</p>
+            <button class="btn-run" onclick="runEndpoint('counts', '/counts')">▶ Run</button>
+            <div id="res-counts" class="response-box">Response will appear here…</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── PAGE: SEARCH ─────────────────────────────────────────────── -->
+    <div class="page" id="page-search">
+      <div class="search-hero">
+        <div class="search-hero-title">Find Any Village</div>
+        <div class="search-hero-sub">Search across the entire India location database</div>
+      </div>
+
+      <div class="search-bar-wrap">
+        <input
+          id="searchQuery"
+          class="search-input-big"
+          type="text"
+          placeholder="Type a village name… (e.g. Wardha, Latur)"
+          oninput="onSearchInput()"
+          onkeydown="onSearchKey(event)"
+          autocomplete="off"
+        />
+        <button class="search-btn-big" onclick="doSearch(document.getElementById('searchQuery').value.trim())">🔍</button>
+      </div>
+
+      <div class="search-results" id="searchResults">
+        <div class="empty-state">
+          <div class="empty-icon">🗺</div>
+          <div class="empty-text">Start typing to search villages across India</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE: HIERARCHY ──────────────────────────────────────────── -->
+    <div class="page" id="page-hierarchy">
+      <div class="section-header mb-16">
+        <div class="section-title">Location Hierarchy Browser</div>
+        <span style="font-size:12px;color:var(--muted);">Click to drill down State → District → Sub-District → Villages</span>
+      </div>
+
+      <div class="hierarchy-flow">
+
+        <!-- States -->
+        <div class="hierarchy-column">
+          <div class="hierarchy-col-header">
+            <span style="font-size:16px;">🏛</span>
+            <span class="hierarchy-col-title">States</span>
+            <span class="hierarchy-col-count" id="h-states-count">—</span>
+          </div>
+          <div class="hierarchy-col-body" id="h-states">
+            <div class="hierarchy-loading">Loading…</div>
+          </div>
+        </div>
+
+        <!-- Districts -->
+        <div class="hierarchy-column">
+          <div class="hierarchy-col-header">
+            <span style="font-size:16px;">📍</span>
+            <span class="hierarchy-col-title">Districts</span>
+            <span class="hierarchy-col-count" id="h-districts-count">—</span>
+          </div>
+          <div class="hierarchy-col-body" id="h-districts">
+            <div class="hierarchy-loading" style="color:#1e2d35">Select a state</div>
+          </div>
+        </div>
+
+        <!-- Sub-Districts -->
+        <div class="hierarchy-column">
+          <div class="hierarchy-col-header">
+            <span style="font-size:16px;">🗂</span>
+            <span class="hierarchy-col-title">Sub-Districts</span>
+            <span class="hierarchy-col-count" id="h-sub_districts-count">—</span>
+          </div>
+          <div class="hierarchy-col-body" id="h-sub_districts">
+            <div class="hierarchy-loading" style="color:#1e2d35">Select a district</div>
+          </div>
+        </div>
+
+        <!-- Villages -->
+        <div class="hierarchy-column">
+          <div class="hierarchy-col-header">
+            <span style="font-size:16px;">🏘</span>
+            <span class="hierarchy-col-title">Villages</span>
+            <span class="hierarchy-col-count" id="h-villages-count">—</span>
+          </div>
+          <div class="hierarchy-col-body" id="h-villages">
+            <div class="hierarchy-loading" style="color:#1e2d35">Select sub-district</div>
+          </div>
+          <div class="pagination" style="padding:10px 12px;border-top:1px solid var(--border);">
+            <button class="page-btn" id="h-prev" onclick="hierarchyPage(-1)" disabled>← Prev</button>
+            <span class="page-info" id="h-page-info"></span>
+            <button class="page-btn" id="h-next" onclick="hierarchyPage(1)" disabled>Next →</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── PAGE: LOGS ───────────────────────────────────────────────── -->
+    <div class="page" id="page-logs">
+      <div class="section-header mb-16">
+        <div class="section-title">Request Logs</div>
+        <button class="btn-refresh" onclick="loadLogs()">↻ Refresh</button>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Response Time</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="logs-tbody">
+            <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);">Loading…</td></tr>
+          </tbody>
         </table>
+      </div>
     </div>
 
-    <!-- Recent Logs Table -->
-    <div class="section">
-        <h2>Recent Requests</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Endpoint</th>
-                    <th>Method</th>
-                    <th>Status</th>
-                    <th>Response Time</th>
-                    <th>Query</th>
-                </tr>
-            </thead>
-            <tbody id="logs-table">
-                <tr><td colspan="6" class="empty">Loading...</td></tr>
-            </tbody>
+    <!-- ─── PAGE: USAGE ──────────────────────────────────────────────── -->
+    <div class="page" id="page-usage">
+      <div class="section-header mb-16">
+        <div class="section-title">Usage Analytics</div>
+        <button class="btn-refresh" onclick="loadUsage()">↻ Refresh</button>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Client</th>
+              <th>Endpoint</th>
+              <th>Total Calls</th>
+              <th>Avg Response</th>
+            </tr>
+          </thead>
+          <tbody id="usage-tbody">
+            <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);">Loading…</td></tr>
+          </tbody>
         </table>
+      </div>
     </div>
 
-</div>
+  </div><!-- /main-content -->
+</div><!-- /app-container -->
 
-<script>
-const API_KEY = "test-key-12345";
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
 
-async function loadData() {
-    document.getElementById("last-updated").textContent = 
-        "Updated: " + new Date().toLocaleTimeString();
-
-    // Usage data load karo
-    try {
-        const res = await fetch("/admin/usage");
-        const data = await res.json();
-
-        const maxCalls = Math.max(...data.map(d => d.total_calls), 1);
-        let totalCalls = 0, totalSuccess = 0, totalFailed = 0, totalMs = 0;
-
-        data.forEach(d => {
-            totalCalls += d.total_calls;
-        });
-
-        const tbody = document.getElementById("usage-table");
-        if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty">No data yet — make some API calls first!</td></tr>';
-        } else {
-            tbody.innerHTML = data.map(d => `
-                <tr>
-                    <td>${d.client}</td>
-                    <td><code>${d.endpoint}</code></td>
-                    <td><strong>${d.total_calls}</strong></td>
-                    <td>${d.avg_response_ms} ms</td>
-                    <td>
-                        <div class="bar-wrap">
-                            <div class="bar" style="width:${Math.round((d.total_calls/maxCalls)*100)}%"></div>
-                        </div>
-                    </td>
-                    <td>${new Date(d.last_used).toLocaleString()}</td>
-                </tr>
-            `).join("");
-        }
-
-        document.getElementById("total-requests").textContent = totalCalls;
-
-    } catch(e) {
-        console.error("Usage load error:", e);
-    }
-
-    // Recent logs load karo
-    try {
-        const res = await fetch("/admin/logs");
-        const logs = await res.json();
-
-        let success = 0, failed = 0, totalMs = 0;
-        logs.forEach(l => {
-            if (l.status_code === 200) success++;
-            else failed++;
-            totalMs += l.response_time_ms;
-        });
-
-        document.getElementById("total-success").textContent = success;
-        document.getElementById("total-failed").textContent = failed;
-        document.getElementById("avg-response").textContent = 
-            logs.length ? Math.round(totalMs / logs.length) + " ms" : "—";
-
-        const tbody = document.getElementById("logs-table");
-        if (logs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty">No logs yet!</td></tr>';
-        } else {
-            tbody.innerHTML = logs.map(l => `
-                <tr>
-                    <td>${new Date(l.created_at).toLocaleString()}</td>
-                    <td><code>${l.endpoint}</code></td>
-                    <td>${l.method}</td>
-                    <td><span class="badge badge-${l.status_code}">${l.status_code}</span></td>
-                    <td>${l.response_time_ms} ms</td>
-                    <td>${l.query_param || "—"}</td>
-                </tr>
-            `).join("");
-        }
-
-    } catch(e) {
-        console.error("Logs load error:", e);
-    }
-}
-
-loadData();
-setInterval(loadData, 30000);
-</script>
-
+<script src="/static/app.js"></script>
 </body>
 </html>
