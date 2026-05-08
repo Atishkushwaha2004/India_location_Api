@@ -1,5 +1,0 @@
-Hostname  → dpg-d7i4rl77f7vs738us1hg-a
-Port      → 5432
-Database  → location_db_rs8c
-Username  → atish_user
-Password  → g5tCRHPJJecOQu5uNbZjIw5zRXwhbZZl
